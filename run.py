@@ -31,6 +31,8 @@ def main():
     ap.add_argument("--max", type=int, default=15, help="max applications to tailor per run (cost cap)")
     ap.add_argument("--min-fit", type=int, default=6)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--prefer", default="seattle,bellevue,portland,remote,san francisco,new york",
+                    help="preferred cities, in order, when a firm posts one role in several cities")
     args = ap.parse_args()
 
     started = dt.datetime.now()
@@ -42,10 +44,36 @@ def main():
 
     log(f"Job agent run {started:%Y-%m-%d %H:%M}")
     new = find_jobs.find_new(use_web=not args.no_web, log=log)
-    log(f"\n{len(new)} new matching jobs. Tailoring up to {args.max}.\n")
+    log(f"\n{len(new)} new matching postings.")
 
     seen = find_jobs.load_seen()
     ready, skipped, failed, manual = [], [], [], []
+
+    # One application per role per firm. Same program in several cities: keep the preferred city,
+    # list the rest. If you already applied to that program anywhere, skip all its other cities.
+    done_roles = {find_jobs.role_key(v.get("company", ""), v.get("title", "")) for v in seen.values()}
+    pref = [c.strip().lower() for c in args.prefer.split(",") if c.strip()]
+    rank = lambda j: next((i for i, c in enumerate(pref) if c in (j["location"] + j["title"]).lower()), len(pref))
+    groups = {}
+    for j in new:
+        groups.setdefault(find_jobs.role_key(j["company"], j["title"]), []).append(j)
+    picked, other_cities = [], []
+    for key, js in groups.items():
+        js.sort(key=rank)
+        rest = js if key in done_roles else js[1:]
+        if key not in done_roles:
+            picked.append(js[0])
+        for j in rest:
+            other_cities.append(j)
+            seen[find_jobs.norm_url(j["url"])] = {"company": j["company"], "title": j["title"], "url": j["url"],
+                                                  "status": "other city of a role already handled",
+                                                  "date": f"{started:%Y-%m-%d}"}
+    if other_cities:
+        log(f"Same role in other cities, not applied ({len(other_cities)}):")
+        for j in other_cities:
+            log(f"  {j['company']} | {j['title']}")
+    new = picked
+    log(f"{len(new)} distinct roles to tailor (up to {args.max}).\n")
 
     for job in new[: args.max]:
         key = find_jobs.norm_url(job["url"])

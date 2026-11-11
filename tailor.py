@@ -348,6 +348,16 @@ def make_pdfs(folder: Path) -> bool:
         return False
 
 
+def unique_folder(pkg: dict, source: str) -> Path:
+    """Company_Role_Location, plus a short id from the posting link. Never reuses another posting's folder."""
+    import hashlib
+    tag = hashlib.md5(str(source).encode()).hexdigest()[:5]
+    base = f"{slug(pkg['company'])[:25]}_{slug(pkg['role'])[:45]}_{slug(pkg.get('location') or '-')[:20] if pkg.get('location') else ''}_{tag}"
+    folder = OUT_DIR / re.sub(r"_+", "_", base).strip("_")
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
 def slug(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_")[:40] or "job"
 
@@ -397,8 +407,7 @@ def process(posting: str, source: str, min_fit: int = 0, dry_run: bool = False, 
     for p in problems:
         say(f"  WARNING: {p}")
 
-    folder = OUT_DIR / f"{slug(pkg['company'])}_{slug(pkg['role'])}"
-    folder.mkdir(parents=True, exist_ok=True)
+    folder = unique_folder(pkg, source)
     build_resume_docx(pkg, resume, folder / "Daniel_Holmberg_Resume.docx")
     build_cover_letter_docx(pkg, resume, folder / "Daniel_Holmberg_Cover_Letter.docx")
     (folder / "posting.txt").write_text(posting, encoding="utf-8")

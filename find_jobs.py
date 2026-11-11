@@ -48,6 +48,14 @@ def matches(title: str) -> bool:
     return not (OLD_YEAR.search(title) and "2027" not in title)
 
 
+def role_key(company: str, title: str) -> str:
+    """Same program in different cities -> same key. 'PWM Internship (Boston - June 2027 Start)' -> 'pwm internship'."""
+    t = re.sub(r"\(.*?\)|\[.*?\]", " ", title.lower())
+    t = re.sub(r"\s[-|,]\s.*$", " ", t)
+    t = re.sub(r"[^a-z ]", " ", t)
+    return f"{company.lower().strip()}|{' '.join(t.split())}"
+
+
 def load_seen() -> dict:
     """Jobs already handled: everything the pipeline processed, plus anything you ran tailor.py on by hand."""
     try:
