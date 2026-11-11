@@ -1,0 +1,87 @@
+{
+  "personal": {
+    "full_name": "Daniel Johan Holmberg",
+    "preferred_name": "Daniel",
+    "email": "daniel.johan.holmberg@gmail.com",
+    "password": "",
+    "phone": "425-898-3324",
+    "address": "417 Morey Ave",
+    "city": "Bellingham",
+    "province_state": "Washington",
+    "country": "United States",
+    "postal_code": "98225",
+    "linkedin_url": "https://www.linkedin.com/in/mrholmberg",
+    "github_url": "",
+    "portfolio_url": "",
+    "website_url": ""
+  },
+  "work_authorization": {
+    "legally_authorized_to_work": "Yes",
+    "require_sponsorship": "No",
+    "work_permit_type": "U.S. Citizen"
+  },
+  "availability": {
+    "earliest_start_date": "June 2027 (summer internship); available full-time June to September 2027",
+    "available_for_full_time": "Yes",
+    "available_for_contract": "No"
+  },
+  "compensation": {
+    "salary_expectation": "40000",
+    "salary_currency": "USD",
+    "salary_range_min": "40000",
+    "salary_range_max": "60000",
+    "currency_conversion_note": "These are internship roles. If asked for an hourly rate, answer the posted rate, or about $20/hr if none is posted."
+  },
+  "experience": {
+    "years_of_experience_total": "0",
+    "education_level": "Bachelor's Degree (in progress, Finance, expected June 2028)",
+    "current_job_title": "Go-to-Market Strategy Intern",
+    "current_company": "Tupl Inc.",
+    "target_role": "Private Wealth Management Intern"
+  },
+  "skills_boundary": {
+    "languages": [],
+    "frameworks": [],
+    "devops": [],
+    "databases": [],
+    "tools": [
+      "Excel",
+      "PowerPoint",
+      "Financial Modeling (DCF, NPV, IRR)",
+      "Portfolio & Risk Analysis",
+      "AI tools"
+    ]
+  },
+  "resume_facts": {
+    "preserved_companies": [
+      "Tupl Inc.",
+      "DERU Market",
+      "Virke"
+    ],
+    "preserved_projects": [
+      "Monte Carlo Simulation on NASDAQ Stock Performance",
+      "Five-Year P&L Forecasting & Analytics Model",
+      "Optimal Pricing & Revenue Forecasting Model",
+      "Goldman Sachs Operations Job Simulation"
+    ],
+    "preserved_school": "Western Washington University",
+    "real_metrics": [
+      "41 senior decision-makers",
+      "10 target accounts",
+      "190-site T-Mobile deployment",
+      "5 international markets",
+      "2,000+ data points",
+      "9 business units",
+      "3,000 students",
+      "$20 pay-per-lead",
+      "GPA 3.4",
+      "92.50/100"
+    ]
+  },
+  "eeo_voluntary": {
+    "gender": "Decline to self-identify",
+    "race_ethnicity": "Decline to self-identify",
+    "veteran_status": "I am not a protected veteran",
+    "disability_status": "I do not wish to answer"
+  }
+}
