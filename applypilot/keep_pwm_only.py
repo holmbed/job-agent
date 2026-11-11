@@ -16,19 +16,23 @@ DROP = re.compile(r"software|engineer|developer|technology intern|marketing|huma
 
 db = os.path.expanduser("~/.applypilot/applypilot.db")
 c = sqlite3.connect(db)
-rows = c.execute("select url, title from jobs where applied_at is null and fit_score > 1").fetchall()
+# unscored jobs too, so off-target titles never get enriched, scored or tailored (saves time and API credit)
+rows = c.execute("select url, title from jobs where applied_at is null "
+                 "and (fit_score is null or fit_score > 1)").fetchall()
 dropped = kept = 0
 for url, title in rows:
     t = title or ""
     if KEEP.search(t) and not DROP.search(t):
         kept += 1
         continue
-    c.execute("update jobs set fit_score = 1, score_reasoning = '[filtered: not a wealth management role] ' "
+    c.execute("update jobs set fit_score = 1, scored_at = coalesce(scored_at, 'filtered'), "
+              "full_description = coalesce(full_description, '[filtered]'), "
+              "score_reasoning = '[filtered: not a wealth management role] ' "
               "|| coalesce(score_reasoning, '') where url = ?", (url,))
     dropped += 1
-    print(f"  dropped: {t}")
 c.commit()
 print(f"Kept {kept} wealth management roles, dropped {dropped} others.")
+print("Roles scoring 7+ and not yet applied to:")
 for score, title in c.execute("select fit_score, title from jobs where applied_at is null and fit_score >= 7 "
                               "order by fit_score desc"):
     print(f"  [{score}/10] {title}")

@@ -10,7 +10,9 @@ $log = "$HOME\.applypilot\logs\daily_$(Get-Date -Format yyyy-MM-dd_HHmm).txt"
 
 & {
     "=== $(Get-Date) ApplyPilot daily run ==="
-    applypilot run discover enrich score
+    applypilot run discover
+    python "$HOME\job-agent\applypilot\keep_pwm_only.py"
+    applypilot run enrich score
     python "$HOME\job-agent\applypilot\keep_pwm_only.py"
     applypilot run tailor cover pdf --min-score 7
     applypilot apply --model sonnet --min-score 7 --limit $Limit
