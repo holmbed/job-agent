@@ -65,7 +65,9 @@ def queue(seen: dict, answers: dict, only: str = "") -> tuple:
         url = r.get("apply_url") or r.get("url", "")
         if only and find_jobs.norm_url(only) not in (key, find_jobs.norm_url(url)):
             continue
-        if r.get("status") != "ready" and not (only and r.get("status") in ("needs review", "needs you")):
+        if r.get("status") != "ready" and not only:
+            continue  # with --only, any status is allowed; the daily run only takes "ready"
+        if only and r.get("status") == "submitted":
             continue
         if not only and (r.get("fit") or 0) < answers.get("min_fit_to_submit", 7):
             continue
@@ -488,7 +490,7 @@ def main():
         notes = json.loads((folder / "notes.json").read_text(encoding="utf-8"))
         seen = find_jobs.load_seen()
         seen[find_jobs.norm_url(args.only)] = {"company": notes.get("company", ""), "title": notes.get("role", ""),
-                                               "url": args.only, "apply_url": args.only, "status": "ready",
+                                               "url": args.only, "apply_url": args.only, "status": "by hand",
                                                "fit": notes.get("fit_score", 0), "folder": args.folder}
         find_jobs.save_seen(seen)
 
