@@ -352,7 +352,7 @@ def slug(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_")[:40] or "job"
 
 
-def log_row(pkg: dict, source: str, folder: Path, problems: list):
+def log_row(pkg: dict, source: str, folder: Path, problems: list, status: str = "drafted"):
     OUT_DIR.mkdir(exist_ok=True)
     log = OUT_DIR / "log.csv"
     new = not log.exists()
@@ -363,10 +363,55 @@ def log_row(pkg: dict, source: str, folder: Path, problems: list):
                         "source", "folder", "fact_check", "status"])
         w.writerow([dt.date.today().isoformat(), pkg["company"], pkg["role"], pkg.get("location", ""),
                     pkg.get("deadline", ""), pkg["fit_score"], source, folder.name,
-                    "; ".join(problems) or "ok", "drafted"])
+                    "; ".join(problems) or "ok", status])
 
 
 # ---------------------------------------------------------------- main
+
+def process(posting: str, source: str, min_fit: int = 0, dry_run: bool = False, verbose: bool = True) -> dict:
+    """Tailor one posting end to end. Returns {"status", "pkg", "folder", "problems"}.
+    Raises on API errors so the caller decides what to do."""
+    say = print if verbose else (lambda *a, **k: None)
+    resume = json.loads((HERE / "resume_data.json").read_text(encoding="utf-8"))
+
+    if dry_run:
+        pkg = dry_run_package(resume)
+    else:
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            raise RuntimeError("Set ANTHROPIC_API_KEY first (see README).")
+        say(f"Tailoring with {MODEL}...")
+        pkg = ask_claude(posting, resume)
+
+    say(f"\n{pkg['company']} | {pkg['role']} | fit {pkg['fit_score']}/10")
+    for r in pkg.get("fit_reasons", []):
+        say(f"  + {r}")
+    for g in pkg.get("gaps", []):
+        say(f"  - {g}")
+
+    if pkg["fit_score"] < min_fit:
+        say(f"  Below min fit {min_fit}, skipped.")
+        log_row(pkg, source, Path(""), [], status=f"skipped (fit {pkg['fit_score']})")
+        return {"status": "skipped", "pkg": pkg, "folder": None, "problems": []}
+
+    problems = fact_check(pkg, resume, posting) + letter_check(pkg["cover_letter"])
+    for p in problems:
+        say(f"  WARNING: {p}")
+
+    folder = OUT_DIR / f"{slug(pkg['company'])}_{slug(pkg['role'])}"
+    folder.mkdir(parents=True, exist_ok=True)
+    build_resume_docx(pkg, resume, folder / "Daniel_Holmberg_Resume.docx")
+    build_cover_letter_docx(pkg, resume, folder / "Daniel_Holmberg_Cover_Letter.docx")
+    (folder / "posting.txt").write_text(posting, encoding="utf-8")
+    (folder / "notes.json").write_text(json.dumps({**pkg, "source": source, "fact_check": problems}, indent=2, ensure_ascii=False), encoding="utf-8")
+    log_row(pkg, source, folder, problems, status="needs review" if problems else "ready")
+
+    for n in pkg.get("screening_notes", []):
+        say(f"  Screening answer idea: {n}")
+    if make_pdfs(folder):
+        say("  PDFs created (upload these, formatting can't shift)")
+    say(f"  Saved to {folder}")
+    return {"status": "needs review" if problems else "ready", "pkg": pkg, "folder": folder, "problems": problems}
+
 
 def main():
     ap = argparse.ArgumentParser(description="Tailor a resume and cover letter to one job posting.")
@@ -379,51 +424,13 @@ def main():
     if not args.url and not args.text:
         ap.error("give a URL or --text posting.txt")
 
-    resume = json.loads((HERE / "resume_data.json").read_text(encoding="utf-8"))
-
     print("Reading posting...")
     posting = Path(args.text).read_text(encoding="utf-8", errors="replace") if args.text else fetch_posting(args.url)
-    source = args.url or args.text
-
-    if args.dry_run:
-        pkg = dry_run_package(resume)
-    else:
-        if not os.environ.get("ANTHROPIC_API_KEY"):
-            sys.exit("Set ANTHROPIC_API_KEY first (see README).")
-        print(f"Tailoring with {MODEL}...")
-        try:
-            pkg = ask_claude(posting, resume)
-        except Exception as e:
-            sys.exit(f"Claude API error: {e}\nCheck your API key and credit at console.anthropic.com.")
-
-    print(f"\n{pkg['company']} | {pkg['role']} | fit {pkg['fit_score']}/10")
-    for r in pkg.get("fit_reasons", []):
-        print(f"  + {r}")
-    for g in pkg.get("gaps", []):
-        print(f"  - {g}")
-
-    if pkg["fit_score"] < args.min_fit:
-        print(f"\nBelow --min-fit {args.min_fit}, skipped.")
-        return
-
-    problems = fact_check(pkg, resume, posting) + letter_check(pkg["cover_letter"])
-    for p in problems:
-        print(f"  WARNING: {p}")
-
-    folder = OUT_DIR / f"{slug(pkg['company'])}_{slug(pkg['role'])}"
-    folder.mkdir(parents=True, exist_ok=True)
-    build_resume_docx(pkg, resume, folder / "Daniel_Holmberg_Resume.docx")
-    build_cover_letter_docx(pkg, resume, folder / "Daniel_Holmberg_Cover_Letter.docx")
-    (folder / "posting.txt").write_text(posting, encoding="utf-8")
-    (folder / "notes.json").write_text(json.dumps({**pkg, "source": source, "fact_check": problems}, indent=2, ensure_ascii=False), encoding="utf-8")
-    log_row(pkg, source, folder, problems)
-
-    for n in pkg.get("screening_notes", []):
-        print(f"  Screening answer idea: {n}")
-    if make_pdfs(folder):
-        print("  PDFs created (upload these, formatting can't shift)")
-    print(f"\nSaved to {folder}")
-    print("Read both files before you submit.")
+    try:
+        process(posting, args.url or args.text, args.min_fit, args.dry_run)
+    except Exception as e:
+        sys.exit(f"Error: {e}\nIf this is an API error, check your key and credit at console.anthropic.com.")
+    print("\nRead both files before you submit.")
 
 
 if __name__ == "__main__":

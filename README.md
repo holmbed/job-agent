@@ -1,8 +1,8 @@
-# Job Agent: tailor
+# Job Agent
 
-Give it a job posting. It writes a tailored one-page resume and cover letter, scores your fit (1 to 10), lists your gaps, suggests screening answers, and logs everything to `applications/log.csv`.
+Finds wealth management internships, then writes a tailored one-page resume and cover letter for each one. It scores your fit from 1 to 10, lists your gaps, and suggests screening answers. You review and submit.
 
-It only uses facts from `resume_data.json`. It warns you if Claude writes a number that isn't in your resume or the posting, uses a cliche, or writes a letter that's too long or short.
+It only uses facts from `resume_data.json`. It warns you if Claude writes a number that isn't in your resume or the posting, uses a cliche, or writes a letter that's too long or too short.
 
 ## Every time you open PowerShell
 
@@ -11,37 +11,74 @@ cd $HOME\job-agent
 .venv\Scripts\activate
 ```
 
-## Use it
+## The daily run (find + tailor)
 
 ```
-# from a link (Lever, Greenhouse, Built In, company career pages)
+python run.py                 # find new jobs, tailor each one, print a summary
+python run.py --no-web        # skip the paid web search, job board feeds only
+python run.py --max 5         # tailor at most 5 this run
+python run.py --min-fit 7     # only keep applications scoring 7/10+ (default 6)
+python run.py --dry-run       # find jobs without paying for tailoring
+```
+
+Where jobs come from:
+1. **Job board feeds** for the firms in `firms.json` (Lever, Greenhouse, Ashby). Free and reliable.
+2. **Claude web search** for everything else (big banks, Workday sites). About $0.10 to $0.40 per run.
+
+Each run:
+- skips anything already handled, including postings you ran `tailor.py` on by hand
+- saves a summary to `applications\runs\`
+- tracks every job in `applications\seen.json` and `applications\log.csv`
+
+Statuses in `log.csv`:
+- `ready`: tailored, no warnings. Read it and submit.
+- `needs review`: tailored, but a check flagged something. Fix it first.
+- `skipped (fit N)`: below your minimum fit. No files written.
+
+Pages the agent can't read land on a "Need you" list in the summary. Use `tailor.py --text` for those.
+
+## Find jobs only
+
+```
+python find_jobs.py               # list new matches, tailor nothing
+python find_jobs.py --check-firms # test every firm in firms.json
+```
+
+To add a firm, find its job board link and add a line to `firms.json`:
+- `jobs.lever.co/NAME` -> `"ats": "lever", "token": "NAME"`
+- `job-boards.greenhouse.io/NAME` -> `"ats": "greenhouse", "token": "NAME"`
+- `jobs.ashbyhq.com/NAME` -> `"ats": "ashby", "token": "NAME"`
+
+## Run it automatically every morning
+
+```
+schtasks /create /tn "JobAgent" /tr "$HOME\job-agent\run_daily.bat" /sc daily /st 08:30
+```
+
+- Your PC must be on and you must be logged in at that time.
+- The output goes to `logs\daily.log`.
+- To run the task now: `schtasks /run /tn "JobAgent"`
+- To remove it: `schtasks /delete /tn "JobAgent" /f`
+
+## Tailor one posting by hand
+
+```
 python tailor.py https://jobs.lever.co/firm/12345
-
-# LinkedIn, Handshake, or any page that fails: paste the posting into a text file
-notepad posting.txt
+notepad posting.txt                     # for LinkedIn, Handshake, or pages that fail
 python tailor.py --text posting.txt
-
-# only write files if the fit is 6/10 or better
-python tailor.py --min-fit 6 https://...
-
-# test without spending API credit
 python tailor.py --dry-run --text sample_posting.txt
-
-# open the results
 explorer applications
 ```
 
-Each run creates `applications\<Company>_<Role>\` with:
+Each application folder `applications\<Company>_<Role>\` has:
 - `Daniel_Holmberg_Resume.docx` and `Daniel_Holmberg_Cover_Letter.docx`
-- `.pdf` copies of both if Microsoft Word is installed (upload the PDFs when a site accepts them)
+- `.pdf` copies of both if Microsoft Word is installed
 - `notes.json` with the fit score, gaps and screening answer ideas
 - `posting.txt`, a copy of the posting, since links die
 
-Running the same posting again overwrites its folder.
-
 ## Before you submit
 
-Read both files. Check the cover letter sounds like you and every claim is true. Fix anything in Word, then upload.
+Read both files. Check that the cover letter sounds like you and that every claim is true. Fix anything in Word, then upload.
 
 ## Updating your resume
 
@@ -50,12 +87,14 @@ Edit `resume_data.json` (`notepad resume_data.json`), not the Word files. Everyt
 ## First-time setup (already done on this PC)
 
 1. Install Python from python.org with "Add python.exe to PATH" checked.
-2. In the project folder: `python -m venv .venv`, then `.venv\Scripts\activate`, then `pip install -r requirements.txt` and `playwright install chromium`.
+2. In the project folder, run `python -m venv .venv`, then `.venv\Scripts\activate`, then `pip install -r requirements.txt` and `playwright install chromium`.
 3. Get an API key at console.anthropic.com and run `setx ANTHROPIC_API_KEY "sk-ant-..."`, then reopen PowerShell.
 
 ## Cost
 
-A few cents per posting.
+- A few cents per tailored application.
+- Up to about $0.40 per day for web search.
+- A daily run with 15 applications costs roughly $1.
 
 ## Save changes to GitHub
 

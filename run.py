@@ -1,0 +1,105 @@
+"""
+Daily pipeline: find new jobs, tailor an application for each, write a summary.
+This is what the scheduled task runs every morning.
+
+Usage:
+  python run.py                    # full run
+  python run.py --no-web           # skip the paid web search
+  python run.py --max 5            # tailor at most 5 jobs this run
+  python run.py --min-fit 7        # only keep applications scoring 7+ (default 6)
+  python run.py --dry-run          # find jobs, but don't call Claude to tailor (free test)
+"""
+
+import argparse
+import datetime as dt
+import sys
+import traceback
+from pathlib import Path
+
+import find_jobs
+import tailor
+
+HERE = Path(__file__).parent
+RUNS = HERE / "applications" / "runs"
+
+
+def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--no-web", action="store_true")
+    ap.add_argument("--max", type=int, default=15, help="max applications to tailor per run (cost cap)")
+    ap.add_argument("--min-fit", type=int, default=6)
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+
+    started = dt.datetime.now()
+    lines = []
+
+    def log(msg=""):
+        print(msg)
+        lines.append(msg)
+
+    log(f"Job agent run {started:%Y-%m-%d %H:%M}")
+    new = find_jobs.find_new(use_web=not args.no_web, log=log)
+    log(f"\n{len(new)} new matching jobs. Tailoring up to {args.max}.\n")
+
+    seen = find_jobs.load_seen()
+    ready, skipped, failed, manual = [], [], [], []
+
+    for job in new[: args.max]:
+        key = find_jobs.norm_url(job["url"])
+        log(f"- {job['company']} | {job['title']}")
+        record = {"company": job["company"], "title": job["title"], "url": job["url"],
+                  "apply_url": job.get("apply_url", job["url"]), "date": f"{started:%Y-%m-%d}"}
+        try:
+            posting = job.get("posting") or tailor.fetch_posting(job["url"])
+        except SystemExit:
+            log("  couldn't read the posting page, added to the manual list")
+            manual.append(job)
+            seen[key] = {**record, "status": "manual: page unreadable"}
+            continue
+        try:
+            res = tailor.process(posting, job.get("apply_url") or job["url"], args.min_fit,
+                                 dry_run=args.dry_run, verbose=False)
+        except Exception as e:
+            log(f"  failed: {str(e)[:150]}")
+            failed.append(job)
+            continue  # not marked seen, so it retries next run
+        pkg = res["pkg"]
+        log(f"  fit {pkg['fit_score']}/10 -> {res['status']}")
+        for p in res["problems"]:
+            log(f"  WARNING: {p}")
+        seen[key] = {**record, "status": res["status"], "fit": pkg["fit_score"],
+                     "folder": res["folder"].name if res["folder"] else ""}
+        (skipped if res["status"] == "skipped" else ready).append((job, res))
+
+    if not args.dry_run:
+        find_jobs.save_seen(seen)
+
+    log("\n==== Summary ====")
+    log(f"Tailored, ready for you to review and submit: {len(ready)}")
+    for job, res in ready:
+        log(f"  [{res['pkg']['fit_score']}/10] {job['company']} | {job['title']}")
+        log(f"      apply: {job.get('apply_url') or job['url']}")
+        log(f"      files: {res['folder']}")
+    if manual:
+        log(f"Need you (page couldn't be read): {len(manual)}")
+        for j in manual:
+            log(f"  {j['company']} | {j['title']} | {j['url']}")
+    log(f"Skipped for low fit: {len(skipped)}")
+    if failed:
+        log(f"Errors (will retry next run): {len(failed)}")
+    if len(new) > args.max:
+        log(f"{len(new) - args.max} more jobs waiting for the next run (raise --max to do more at once).")
+
+    RUNS.mkdir(parents=True, exist_ok=True)
+    (RUNS / f"{started:%Y-%m-%d_%H%M}.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        traceback.print_exc()
+        sys.exit(1)

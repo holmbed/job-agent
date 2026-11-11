@@ -1,0 +1,14 @@
+{
+  "_how_to_add": "Find a firm's job board link. jobs.lever.co/NAME -> lever, job-boards.greenhouse.io/NAME or boards.greenhouse.io/NAME -> greenhouse, jobs.ashbyhq.com/NAME -> ashby. Add {\"name\": ..., \"ats\": ..., \"token\": NAME}. Run: python find_jobs.py --check-firms",
+  "firms": [
+    {"name": "Brighton Jones", "ats": "lever", "token": "brightonjones"},
+    {"name": "Freestone Capital Management", "ats": "greenhouse", "token": "freestonecapitalmanagement"},
+    {"name": "Focus Financial Partners", "ats": "greenhouse", "token": "focusfinancialpartners"},
+    {"name": "SCS Financial", "ats": "greenhouse", "token": "scsfinancial"},
+    {"name": "Jordan Park Group", "ats": "greenhouse", "token": "jordanparkgroup"},
+    {"name": "Aperture / Apercen Partners", "ats": "greenhouse", "token": "apercenpartnersllc"},
+    {"name": "iCapital", "ats": "greenhouse", "token": "icapitalnetwork"},
+    {"name": "Harris Associates", "ats": "greenhouse", "token": "harrisassociates"},
+    {"name": "Alpha AWM early careers", "ats": "greenhouse", "token": "alphaawmnaearlycareers"}
+  ]
+}
