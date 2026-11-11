@@ -33,6 +33,6 @@ db = os.path.expanduser("~/.applypilot/applypilot.db")
 if os.path.exists(db):
     c = sqlite3.connect(db)
     n = c.execute("update jobs set fit_score=NULL, scored_at=NULL "
-                  "where score_reasoning like 'LLM error%'").rowcount
+                  "where score_reasoning like '%LLM error%' or fit_score = 0").rowcount
     c.commit()
     print(f"Cleared {n} failed scores; they will be rescored on the next run")
