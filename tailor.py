@@ -47,13 +47,17 @@ def fetch_posting(url: str) -> str:
         print(f"  plain fetch failed ({e}), trying a real browser")
 
     if len(text) < 1500:
-        from playwright.sync_api import sync_playwright
-        with sync_playwright() as p:
-            browser = p.chromium.launch()
-            page = browser.new_page()
-            page.goto(url, wait_until="networkidle", timeout=60000)
-            text = page.inner_text("body")
-            browser.close()
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch()
+                page = browser.new_page()
+                page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                page.wait_for_timeout(4000)
+                text = page.inner_text("body")
+                browser.close()
+        except Exception as e:
+            print(f"  browser fetch failed ({str(e).splitlines()[0]})")
 
     if len(text) < 500:
         sys.exit("Could not read the posting from that link. Copy the posting into a .txt file and use --text.")
@@ -141,7 +145,7 @@ def ask_claude(posting: str, resume: dict) -> dict:
     for block in msg.content:
         if block.type == "tool_use":
             return block.input
-    sys.exit("Claude did not return an application package.")
+    sys.exit("Claude did not return an application package. Run it again; if it keeps happening, send the output to Claude.")
 
 
 def dry_run_package(resume: dict) -> dict:
@@ -179,6 +183,20 @@ def fact_check(pkg: dict, resume: dict, posting: str = "") -> list:
         problems.append(f"Numbers not in your resume: {', '.join(invented)}")
     if bad_ids:
         problems.append(f"Unknown entries: {', '.join(bad_ids)}")
+    return problems
+
+
+BANNED = ["passionate", "i am excited", "thrilled", "leverage", "fast-paced", "great fit",
+          "the best place", "would welcome the chance", "i am writing to", "gpa"]
+
+
+def letter_check(letter: str) -> list:
+    """Flag cliches and length problems in the cover letter."""
+    low = letter.lower()
+    problems = [f'Cover letter uses "{b}"' for b in BANNED if b in low]
+    words = len(letter.split())
+    if not 150 <= words <= 300:
+        problems.append(f"Cover letter is {words} words (aim for 180 to 260)")
     return problems
 
 
@@ -318,6 +336,17 @@ def build_cover_letter_docx(pkg: dict, resume: dict, path: Path):
     doc.save(path)
 
 
+def make_pdfs(folder: Path) -> bool:
+    """Convert the .docx files to PDF with Microsoft Word if it is installed. Silent no-op otherwise."""
+    try:
+        from docx2pdf import convert
+        for name in ("Daniel_Holmberg_Resume", "Daniel_Holmberg_Cover_Letter"):
+            convert(str(folder / f"{name}.docx"), str(folder / f"{name}.pdf"))
+        return True
+    except Exception:
+        return False
+
+
 def slug(s: str) -> str:
     return re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_")[:40] or "job"
 
@@ -361,7 +390,10 @@ def main():
         if not os.environ.get("ANTHROPIC_API_KEY"):
             sys.exit("Set ANTHROPIC_API_KEY first (see README).")
         print(f"Tailoring with {MODEL}...")
-        pkg = ask_claude(posting, resume)
+        try:
+            pkg = ask_claude(posting, resume)
+        except Exception as e:
+            sys.exit(f"Claude API error: {e}\nCheck your API key and credit at console.anthropic.com.")
 
     print(f"\n{pkg['company']} | {pkg['role']} | fit {pkg['fit_score']}/10")
     for r in pkg.get("fit_reasons", []):
@@ -373,7 +405,7 @@ def main():
         print(f"\nBelow --min-fit {args.min_fit}, skipped.")
         return
 
-    problems = fact_check(pkg, resume, posting)
+    problems = fact_check(pkg, resume, posting) + letter_check(pkg["cover_letter"])
     for p in problems:
         print(f"  WARNING: {p}")
 
@@ -385,7 +417,12 @@ def main():
     (folder / "notes.json").write_text(json.dumps({**pkg, "source": source, "fact_check": problems}, indent=2, ensure_ascii=False), encoding="utf-8")
     log_row(pkg, source, folder, problems)
 
+    for n in pkg.get("screening_notes", []):
+        print(f"  Screening answer idea: {n}")
+    if make_pdfs(folder):
+        print("  PDFs created (upload these, formatting can't shift)")
     print(f"\nSaved to {folder}")
+    print("Read both files before you submit.")
 
 
 if __name__ == "__main__":

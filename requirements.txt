@@ -3,3 +3,4 @@ python-docx
 requests
 beautifulsoup4
 playwright
+docx2pdf
