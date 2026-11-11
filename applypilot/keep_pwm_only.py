@@ -9,8 +9,9 @@ import os
 import re
 import sqlite3
 
-KEEP = re.compile(r"wealth|private client|private bank|financial plan|planning|advis|family office|\bpwm\b|"
-                  r"investment management|portfolio|trust|financial analyst|client service", re.I)
+KEEP = re.compile(r"wealth|private client|private bank|financial plan|estate planning|retirement planning|"
+                  r"financial advis|wealth advis|investment advis|family office|\bpwm\b|investment management|"
+                  r"portfolio management|trust (and|&) estate|trust officer|\btrust (company|bank|services)", re.I)
 DROP = re.compile(r"software|engineer|developer|technology intern|marketing|human resources|\bhr\b|"
                   r"recruit|graphic|design|nurse|retail sales|insurance agent|mba|phd|investment banking", re.I)
 
