@@ -70,6 +70,7 @@ SYSTEM = """You tailor job applications for one real candidate. Hard rules:
 - Use ONLY facts in the candidate's resume data. Never invent employers, titles, dates, numbers, tools, certifications, or results.
 - You may reword, reorder, shorten, and choose which bullets and projects to include, and you may rename the skills list to match the posting's vocabulary only where the candidate truly has that skill.
 - Every number you write must already appear in the resume data.
+- The skills list is for technical and professional skills only. Never put languages or interests in it; they already appear under Additional Information.
 - Never use em dashes or en dashes in prose. Use commas, periods, or parentheses.
 - Cover letter: 3 paragraphs, 180 to 260 words. Write like a sharp, direct college student, short sentences, no corporate filler.
   Paragraph 1: why this role and firm, in 2 or 3 sentences. Use a specific detail from the posting. Do not open with a generic career statement.
@@ -281,7 +282,7 @@ def build_resume_docx(pkg: dict, resume: dict, path: Path):
         para(f"{ed['degree']}  •  GPA: {ed['gpa']}", italic=True)
     p = para()
     p.add_run("Relevant Skills: ").bold = True
-    p.add_run(", ".join(pkg["skills"]))
+    p.add_run(", ".join(k for k in pkg["skills"] if not k.lower().startswith("language")))
 
     lookup = {e["id"]: e for k in ("experience", "entrepreneurship", "projects", "leadership", "courses")
               for e in resume[k]}
