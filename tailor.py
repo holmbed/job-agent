@@ -67,7 +67,12 @@ SYSTEM = """You tailor job applications for one real candidate. Hard rules:
 - You may reword, reorder, shorten, and choose which bullets and projects to include, and you may rename the skills list to match the posting's vocabulary only where the candidate truly has that skill.
 - Every number you write must already appear in the resume data.
 - Never use em dashes or en dashes in prose. Use commas, periods, or parentheses.
-- Cover letter: 230 to 320 words, plain and specific, no cliches ("I am excited to", "passionate", "thrilled", "leverage my skills", "fast-paced environment", "I believe I would be a great fit"). Open with why this firm and role, not with the candidate's name. Mention one concrete thing about the firm only if it is stated in the posting. Sign off as the candidate.
+- Cover letter: 3 paragraphs, 180 to 260 words. Write like a sharp, direct college student, short sentences, no corporate filler.
+  Paragraph 1: why this role and firm, in 2 or 3 sentences. Use a specific detail from the posting. Do not open with a generic career statement.
+  Paragraph 2: pick the 2 strongest proof points for THIS posting and tie each one to a duty the posting lists. Do not recap the resume or list projects.
+  Paragraph 3: one distinctive angle the resume only hints at (languages for serving more clients, founding Latinos in Finance, building a startup), then a one-sentence close.
+  Never mention GPA, course grades, or the word "passionate". Banned: "I am excited", "thrilled", "leverage", "fast-paced", "great fit", "the best place", "I also understand", "tools I already use", "would welcome the chance".
+  Do NOT include a sign-off or the candidate's name; the template adds them.
 - Resume must fit on one page: at most 15 bullets total. At most 3 bullets per job, at most 3 projects with 2 bullets each (you may merge Challenge/Solution/Impact), at most 2 course bullets, 1 bullet per leadership entry. Keep bullets under 22 words. Drop the least relevant entries rather than squeezing.
 - Be honest in fit_score. A sophomore/junior applying to a role that requires a degree, licenses (SIE, Series 7, 66) already held, or years of experience is a low score."""
 
@@ -95,7 +100,7 @@ TOOL = {
             "leadership": {"$ref": "#/$defs/section"},
             "courses": {"$ref": "#/$defs/section"},
             "cover_letter": {"type": "string",
-                             "description": "Body paragraphs only, separated by blank lines. No date, address block, or greeting."},
+                             "description": "Body paragraphs only, separated by blank lines. No date, address block, greeting, sign-off, or name."},
             "screening_notes": {"type": "array", "items": {"type": "string"},
                                 "description": "Short suggested answers to any screening questions visible in the posting"}
         },
@@ -306,7 +311,7 @@ def build_cover_letter_docx(pkg: dict, resume: dict, path: Path):
     doc.add_paragraph(f"{pkg['company']} Hiring Team")
     doc.add_paragraph(f"Re: {pkg['role']}")
     doc.add_paragraph("Dear Hiring Team,")
-    for chunk in [c.strip() for c in pkg["cover_letter"].split("\n\n") if c.strip()]:
+    for chunk in [c.strip() for c in pkg["cover_letter"].split("\n\n") if c.strip() and c.strip().rstrip(",") not in (resume["name"], "Sincerely", "Best", "Best regards", "Daniel Holmberg")]:
         doc.add_paragraph(strip_dashes(chunk))
     doc.add_paragraph("Sincerely,")
     doc.add_paragraph(resume["name"])
