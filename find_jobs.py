@@ -117,7 +117,8 @@ def fetch_feed(firm: dict) -> list:
         return [{
             "company": name, "title": j.get("title", ""),
             "location": (j.get("location") or {}).get("name", ""),
-            "url": j.get("absolute_url", ""), "apply_url": j.get("absolute_url", ""),
+            "url": j.get("absolute_url", ""),
+            "apply_url": f"https://job-boards.greenhouse.io/{token}/jobs/{j.get('id')}",
             "posting": f"{name}\n{j.get('title','')}\n{(j.get('location') or {}).get('name','')}\n\n"
                        + clean_html(j.get("content", "")),
         } for j in data.get("jobs", [])]

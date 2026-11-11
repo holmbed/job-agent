@@ -3,3 +3,5 @@ __pycache__/
 applications/
 .env
 logs/
+answers.json
+.browser-profile/

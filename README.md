@@ -1,6 +1,6 @@
 # Job Agent
 
-Finds wealth management internships, then writes a tailored one-page resume and cover letter for each one. It scores your fit from 1 to 10, lists your gaps, and suggests screening answers. You review and submit.
+Finds wealth management internships and writes a tailored one-page resume and cover letter for each one. It scores your fit from 1 to 10, lists your gaps, and suggests screening answers. On Lever, Greenhouse and Ashby it can also submit the application for you.
 
 It only uses facts from `resume_data.json`. It warns you if Claude writes a number that isn't in your resume or the posting, uses a cliche, or writes a letter that's too long or too short.
 
@@ -36,6 +36,41 @@ Statuses in `log.csv`:
 - `skipped (fit N)`: below your minimum fit. No files written.
 
 Pages the agent can't read land on a "Need you" list in the summary. Use `tailor.py --text` for those.
+
+## Auto-submit (Lever, Greenhouse, Ashby)
+
+One-time setup:
+```
+copy answers.example.json answers.json
+notepad answers.json
+```
+Fill in every `FILL_ME`. Check every answer, because these go on real applications. `answers.json` stays on your PC and is not uploaded to GitHub.
+
+```
+python submit.py --list            # what's queued, and what you must apply to yourself
+python submit.py --watch           # practice: fills each form while you watch, does NOT submit
+python submit.py                   # practice, no window
+python submit.py --submit          # really submit (needs "auto_submit": true in answers.json)
+python submit.py --only URL --watch   # one application
+```
+
+Once `"auto_submit": true` is set, `python run.py` finds, tailors and submits in one go.
+
+The submitter never guesses. It stops and puts the application on your "needs you" list when:
+- a required question has no answer in `answers.json`, your resume or your cover letter
+- a CAPTCHA appears
+- the site wants an account or login
+- it can't confirm the submission went through
+
+Workday and big bank sites always land on the "apply yourself" list.
+
+Records it keeps:
+- `applications\screenshots\`: the filled form, the confirmation page, and every question with the answer it gave
+- `applications\submissions.csv`: every attempt and its result
+
+Settings in `answers.json`:
+- `min_fit_to_submit` (default 7)
+- `max_submissions_per_run` (default 10)
 
 ## Find jobs only
 

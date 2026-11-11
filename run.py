@@ -31,6 +31,7 @@ def main():
     ap.add_argument("--max", type=int, default=15, help="max applications to tailor per run (cost cap)")
     ap.add_argument("--min-fit", type=int, default=6)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--no-submit", action="store_true", help="tailor only, don't auto-submit this run")
     ap.add_argument("--prefer", default="seattle,bellevue,portland,remote,san francisco,new york",
                     help="preferred cities, in order, when a firm posts one role in several cities")
     args = ap.parse_args()
@@ -123,6 +124,31 @@ def main():
         log(f"Errors (will retry next run): {len(failed)}")
     if len(new) > args.max:
         log(f"{len(new) - args.max} more jobs waiting for the next run (raise --max to do more at once).")
+
+    # ---- auto-submit (only when answers.json has "auto_submit": true)
+    answers_file = HERE / "answers.json"
+    if not args.dry_run and not args.no_submit and answers_file.exists():
+        import json
+        import submit
+        if json.loads(answers_file.read_text(encoding="utf-8")).get("auto_submit"):
+            log("\n==== Auto-submit ====")
+            try:
+                res = submit.run(really_submit=True, log=log)
+                log(f"Submitted: {len(res['submitted'])}")
+                for r, d in res["submitted"]:
+                    log(f"  {r.get('company')} | {r.get('title')}")
+                if res["needs you"] or res["failed"]:
+                    log(f"Needs you: {len(res['needs you']) + len(res['failed'])}")
+                    for r, d in res["needs you"] + res["failed"]:
+                        log(f"  {r.get('company')} | {r.get('title')}: {d}")
+                if res["not supported"]:
+                    log(f"Apply yourself (Workday / big bank sites): {len(res['not supported'])}")
+                    for r in res["not supported"]:
+                        log(f"  {r.get('company')} | {r.get('title')}  {r['_url']}")
+            except SystemExit as e:
+                log(f"Auto-submit skipped: {e}")
+            except Exception as e:
+                log(f"Auto-submit error: {str(e)[:200]}")
 
     RUNS.mkdir(parents=True, exist_ok=True)
     (RUNS / f"{started:%Y-%m-%d_%H%M}.txt").write_text("\n".join(lines), encoding="utf-8-sig")
