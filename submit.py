@@ -467,6 +467,7 @@ def main():
     ap.add_argument("--watch", action="store_true", help="show the browser")
     ap.add_argument("--only", default="", help="one application, by its apply URL")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--folder", default="", help="with --only: use this application folder (for jobs you tailored by hand)")
     args = ap.parse_args()
 
     if args.list:
@@ -478,6 +479,18 @@ def main():
         for r in manual:
             print(f"  {r.get('company')} | {r.get('title')}\n    {r['_url']}")
         return
+
+    if args.only and args.folder:
+        # one-off: an application tailored by hand with tailor.py
+        folder = APPS / args.folder
+        if not folder.exists():
+            sys.exit(f"No folder applications\\{args.folder}")
+        notes = json.loads((folder / "notes.json").read_text(encoding="utf-8"))
+        seen = find_jobs.load_seen()
+        seen[find_jobs.norm_url(args.only)] = {"company": notes.get("company", ""), "title": notes.get("role", ""),
+                                               "url": args.only, "apply_url": args.only, "status": "ready",
+                                               "fit": notes.get("fit_score", 0), "folder": args.folder}
+        find_jobs.save_seen(seen)
 
     res = run(args.submit, args.watch, args.only)
     print("\n==== Submit summary ====")
