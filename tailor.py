@@ -408,6 +408,8 @@ def process(posting: str, source: str, min_fit: int = 0, dry_run: bool = False, 
     """Tailor one posting end to end. Returns {"status", "pkg", "folder", "problems"}.
     Raises on API errors so the caller decides what to do."""
     say = print if verbose else (lambda *a, **k: None)
+    if len((posting or "").strip()) < 300:
+        raise RuntimeError("posting text is empty or too short to tailor")
     resume = json.loads((HERE / "resume_data.json").read_text(encoding="utf-8"))
 
     if dry_run:
@@ -461,6 +463,9 @@ def main():
 
     print("Reading posting...")
     posting = Path(args.text).read_text(encoding="utf-8", errors="replace") if args.text else fetch_posting(args.url)
+    if len(posting.strip()) < 300:
+        sys.exit(f"The posting is empty or too short ({len(posting.strip())} characters). "
+                 "Paste the full job description into the file, press Ctrl+S to save, then run again.")
     try:
         process(posting, args.url or args.text, args.min_fit, args.dry_run)
     except Exception as e:
