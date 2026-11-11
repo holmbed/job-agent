@@ -1,0 +1,146 @@
+{
+  "name": "Daniel Johan Holmberg",
+  "contact": ["425-898-3324", "holmbed@wwu.edu", "Bellingham, Washington", "www.linkedin.com/in/mrholmberg"],
+  "education": [
+    {
+      "school": "Western Washington University",
+      "location": "Bellingham, Washington",
+      "degree": "Bachelor of Arts, Finance",
+      "gpa": "3.4",
+      "date": "Expected Spring 2028"
+    }
+  ],
+  "skills": ["Financial Modeling (DCF, NPV, IRR)", "Portfolio & Risk Analysis", "Excel", "PowerPoint", "Client Relations", "AI Tools"],
+  "experience": [
+    {
+      "id": "tupl",
+      "title": "Go-to-Market Strategy Intern",
+      "org": "Tupl Inc.",
+      "location": "Bellevue, WA",
+      "date": "Summer 2026",
+      "blurb": "AI automation software company serving Tier 1 telecom carriers and data center operators.",
+      "bullets": [
+        "Reported directly to the CEO, delivering market research, competitive intelligence, and executive briefings to guide growth strategy",
+        "Benchmarked competitor pricing to build a tiered pricing model for an AI product and profiled carriers across 5 international markets",
+        "Mapped 41 senior decision-makers across 10 target accounts for a platform scaled from a 190-site T-Mobile deployment"
+      ]
+    },
+    {
+      "id": "deru",
+      "title": "Curbside Host",
+      "org": "DERU Market",
+      "location": "Kirkland, WA",
+      "date": "Jan 2024 – Sept 2025",
+      "blurb": "Locally sourced market and café.",
+      "bullets": [
+        "First point of contact for customers, managing orders, pickups, and service requests in a fast-paced, high-volume setting",
+        "Built rapport with regular customers and resolved complaints on the spot; streamlined scheduling to reduce wait times"
+      ]
+    }
+  ],
+  "entrepreneurship": [
+    {
+      "id": "virke",
+      "title": "Co-Founder",
+      "org": "Virke (virke.us)",
+      "location": "",
+      "date": "2026 – Present",
+      "blurb": "AI-powered home services concierge app.",
+      "bullets": [
+        "Built the company from scratch with a co-founder, leading branding, the mobile app front end, and go-to-market research",
+        "Deployed an AI voice agent (Telnyx) that automatically calls local contractors after each job request; first to confirm wins the lead",
+        "Designed a $20 pay-per-lead revenue model with Stripe payments, charging contractors only after they confirm a job",
+        "AI & Tech Stack: Telnyx AI Voice, React Native/Expo, Supabase, Railway, Stripe, Vercel"
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "montecarlo",
+      "title": "Monte Carlo Simulation on NASDAQ Stock Performance",
+      "org": "Personal Project",
+      "date": "June 2025",
+      "bullets": [
+        "Challenge: Needed to evaluate stock market volatility and risk-adjusted returns",
+        "Solution: Developed a Monte Carlo simulation using historical price data to model thousands of price paths",
+        "Impact: Improved portfolio risk understanding and presented insights into potential drawdowns"
+      ]
+    },
+    {
+      "id": "pricing",
+      "title": "Optimal Pricing & Revenue Forecasting Model",
+      "org": "Personal Project",
+      "date": "July 2025",
+      "bullets": [
+        "Challenge: Needed to determine optimal pricing strategies and forecast revenue under varying demand elasticities",
+        "Solution: Built Excel models with elasticity metrics, marginal revenue curves, and capital allocation simulations to test pricing",
+        "Impact: Improved revenue forecast accuracy by quantifying financial trade-offs across pricing scenarios"
+      ]
+    },
+    {
+      "id": "pnl",
+      "title": "Five-Year P&L Forecasting & Analytics Model",
+      "org": "Personal Project",
+      "date": "Sept 2025",
+      "bullets": [
+        "Challenge: Needed to project multi-year revenue and profitability across 9 business units using inconsistent financial data",
+        "Solution: Built a 5-year P&L model in Excel with 2,000+ data points, growth-rate assumptions, and sensitivity analysis",
+        "Impact: Delivered visibility into revenue trends, EBITDA variance, and capital efficiency, improving forecast accuracy"
+      ]
+    },
+    {
+      "id": "goldman",
+      "title": "Goldman Sachs Operations Job Simulation",
+      "org": "Forage Virtual Experience",
+      "date": "Dec 2025",
+      "bullets": [
+        "Challenge: Needed to analyze trade settlements, asset transfers, and activity risks in high-net-worth client accounts",
+        "Solution: Reviewed transaction data for settlement and compliance breaks, partnering with Trading, Compliance, and IT on fixes",
+        "Impact: Strengthened operations risk management skills, resolving complex issues to support accurate, timely trade execution for clients"
+      ]
+    }
+  ],
+  "leadership": [
+    {
+      "id": "lif",
+      "title": "President/Founder",
+      "org": "Latinos in Finance",
+      "date": "Oct 2025 – Present",
+      "bullets": [
+        "Founded and lead the WWU chapter, running workshops on financial literacy, Latinx representation in finance, and career development"
+      ]
+    },
+    {
+      "id": "fma",
+      "title": "Member",
+      "org": "Finance Management Association",
+      "date": "Sept 2024 – Present",
+      "bullets": [
+        "Active member of an international finance club with over 3,000 students, discussing financial management and investment strategies"
+      ]
+    }
+  ],
+  "courses": [
+    {
+      "id": "wharton",
+      "title": "Wharton Introduction to Corporate Finance",
+      "org": "University of Pennsylvania Online, Grade: 92.50/100",
+      "date": "Dec 2025",
+      "bullets": [
+        "Analyzed valuation frameworks including discounted cash flow (DCF), NPV, IRR, and capital budgeting",
+        "Evaluated risk-return trade-offs using portfolio theory and cost of capital concepts",
+        "Modeled financial decisions involving leverage, capital structure, and payout policy"
+      ]
+    }
+  ],
+  "additional": {
+    "Languages": "Fluent in English, Portuguese (Brazil), intermediate in Spanish, and Swedish",
+    "Interests": "Jazz/Bossa Nova, Pickleball, and Watches"
+  },
+  "background_for_cover_letters": [
+    "Targeting private wealth management (PWM) roles.",
+    "Dual US and Swedish citizen; based in the Pacific Northwest.",
+    "Builds websites as side income.",
+    "At Tupl, reported to CEO Petri Hautakangas; internship ended September 2026."
+  ]
+}

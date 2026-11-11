@@ -1,0 +1,5 @@
+anthropic
+python-docx
+requests
+beautifulsoup4
+playwright
