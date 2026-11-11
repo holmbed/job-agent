@@ -31,8 +31,34 @@ MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5-5")
 
 # ---------------------------------------------------------------- 1. get the posting
 
+def fetch_from_ats_api(url: str) -> str:
+    """Greenhouse and Lever pages often need JavaScript, but both have public JSON for every posting."""
+    import html as _html
+    import requests
+    from bs4 import BeautifulSoup
+    clean = lambda h: BeautifulSoup(_html.unescape(h or ""), "html.parser").get_text("\n", strip=True)
+    m = re.search(r"greenhouse\.io/(?:embed/job_app\?for=)?([\w-]+)/jobs/(\d+)", url)
+    if m:
+        j = requests.get(f"https://boards-api.greenhouse.io/v1/boards/{m.group(1)}/jobs/{m.group(2)}",
+                         timeout=20).json()
+        return f"{j.get('title','')}\n{(j.get('location') or {}).get('name','')}\n\n{clean(j.get('content'))}"
+    m = re.search(r"jobs\.lever\.co/([\w-]+)/([0-9a-f-]{36})", url)
+    if m:
+        j = requests.get(f"https://api.lever.co/v0/postings/{m.group(1)}/{m.group(2)}", timeout=20).json()
+        lists = "\n".join(l.get("text", "") + "\n" + clean(l.get("content")) for l in j.get("lists", []))
+        return (f"{j.get('text','')}\n{(j.get('categories') or {}).get('location','')}\n\n"
+                f"{j.get('descriptionPlain') or clean(j.get('description'))}\n{lists}\n{j.get('additionalPlain','')}")
+    return ""
+
+
 def fetch_posting(url: str) -> str:
-    """Plain request first; if the page is mostly JavaScript (Workday etc.), render it in a browser."""
+    """ATS API first, then a plain request, then a real browser for JavaScript-heavy pages (Workday etc.)."""
+    try:
+        text = fetch_from_ats_api(url)
+        if len(text) > 500:
+            return text[:30000]
+    except Exception as e:
+        print(f"  job board API failed ({str(e)[:80]})")
     text = ""
     try:
         import requests

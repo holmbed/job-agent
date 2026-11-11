@@ -109,7 +109,10 @@ def main():
     log(f"Tailored, ready for you to review and submit: {len(ready)}")
     for job, res in ready:
         log(f"  [{res['pkg']['fit_score']}/10] {job['company']} | {job['title']}")
-        log(f"      apply: {job.get('apply_url') or job['url']}")
+        link = job.get('apply_url') or job['url']
+        if find_jobs.is_aggregator(link):
+            log(f"      apply: find it on {job['company']}'s own careers site (link below is a copy, not the real application)")
+        log(f"      {'posting' if find_jobs.is_aggregator(link) else 'apply'}: {link}")
         log(f"      files: {res['folder']}")
     if manual:
         log(f"Need you (page couldn't be read): {len(manual)}")
@@ -122,7 +125,7 @@ def main():
         log(f"{len(new) - args.max} more jobs waiting for the next run (raise --max to do more at once).")
 
     RUNS.mkdir(parents=True, exist_ok=True)
-    (RUNS / f"{started:%Y-%m-%d_%H%M}.txt").write_text("\n".join(lines), encoding="utf-8")
+    (RUNS / f"{started:%Y-%m-%d_%H%M}.txt").write_text("\n".join(lines), encoding="utf-8-sig")
 
 
 if __name__ == "__main__":

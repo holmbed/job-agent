@@ -37,6 +37,18 @@ def clean_html(raw: str) -> str:
     return BeautifulSoup(html.unescape(raw or ""), "html.parser").get_text("\n", strip=True)
 
 
+AGGREGATORS = ["linkedin.com", "indeed.com", "glassdoor.com", "ziprecruiter.com", "joinhandshake.com",
+               "simplify.jobs", "builtin.com", "builtinseattle.com", "tealhq.com", "talents.vaia.com",
+               "higherin.com", "targetjobs.co.uk", "career.com", "joinrise.co", "interndock.com",
+               "diversityjobs.com", "interviewpal.com", "app.joinrunway.io"]
+
+
+def is_aggregator(url: str) -> bool:
+    """True for job boards that copy postings instead of hosting the real application."""
+    host = re.sub(r"^https?://", "", (url or "").lower()).split("/")[0]
+    return host.endswith(".edu") or any(host == d or host.endswith("." + d) for d in AGGREGATORS)
+
+
 def norm_url(u: str) -> str:
     return re.sub(r"[?#].*$", "", (u or "").strip()).rstrip("/").lower()
 
@@ -145,7 +157,7 @@ Edward Jones), trust banks (Northern Trust, BNY), and independent RIAs and multi
 
 Rules:
 - Only roles for undergraduates, starting summer 2027. Skip anything for 2026 or earlier, MBA roles, and roles whose deadline has passed.
-- Prefer the employer's own posting URL (career site, Workday, Lever, Greenhouse) over aggregators.
+- The url MUST be the employer's own posting: their careers site or their applicant system (myworkdayjobs.com, greenhouse.io, lever.co, ashbyhq.com, icims.com, taleo.net, oraclecloud.com, successfactors, eightfold.ai). Never a university career site (.edu), Handshake, Simplify, Built In, Teal, Indeed, or any other job aggregator. If you only find it on an aggregator, search again for the employer's own page; if you still can't find it, leave it out.
 - Skip these already-known postings: {known}
 
 After searching, output ONLY a JSON array between <jobs> and </jobs>, each item:
@@ -158,7 +170,7 @@ def from_web_search(known: list, max_searches: int = 8, log=print) -> list:
     client = anthropic.Anthropic()
     messages = [{"role": "user", "content": SEARCH_PROMPT.format(known="; ".join(known[:80]) or "none")}]
     tools = [{"type": "web_search_20250305", "name": "web_search", "max_uses": max_searches,
-              "blocked_domains": ["linkedin.com", "indeed.com", "glassdoor.com", "ziprecruiter.com"]}]
+              "blocked_domains": AGGREGATORS}]
     text = ""
     for _ in range(4):  # the API may pause long search turns; resend to continue
         msg = client.messages.create(model=MODEL, max_tokens=8000, messages=messages, tools=tools)
