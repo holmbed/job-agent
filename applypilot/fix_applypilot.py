@@ -36,3 +36,42 @@ if os.path.exists(db):
                   "where score_reasoning like '%LLM error%' or fit_score = 0").rowcount
     c.commit()
     print(f"Cleared {n} failed scores; they will be rescored on the next run")
+
+
+# ---- Windows: start Claude Code and npx correctly ----
+# npm installs Claude Code as claude.cmd, which Python can't start by the bare name "claude".
+# Claude Code also needs "cmd /c npx" to start browser tools on Windows.
+import applypilot.apply.launcher as launcher
+
+lp = launcher.__file__
+ls = open(lp, encoding="utf-8").read()
+OLD_CMD = '    cmd = [\n        "claude",\n        "--model", model,'
+NEW_CMD = '    cmd = [\n        __import__("shutil").which("claude") or "claude",\n        "--model", model,'
+OLD_MCP = ('def _make_mcp_config(cdp_port: int) -> dict:\n'
+           '    """Build MCP config dict for a specific CDP port."""\n'
+           '    return {')
+NEW_MCP = ('def _make_mcp_config(cdp_port: int) -> dict:\n'
+           '    """Build MCP config dict for a specific CDP port."""\n'
+           '    cfg = _make_mcp_config_base(cdp_port)\n'
+           '    if platform.system() == "Windows":\n'
+           '        for srv in cfg["mcpServers"].values():\n'
+           '            if srv.get("command") == "npx":\n'
+           '                srv["command"] = "cmd"\n'
+           '                srv["args"] = ["/c", "npx"] + srv["args"]\n'
+           '    return cfg\n'
+           '\n'
+           '\n'
+           'def _make_mcp_config_base(cdp_port: int) -> dict:\n'
+           '    return {')
+changed = 0
+for old, new in ((OLD_CMD, NEW_CMD), (OLD_MCP, NEW_MCP)):
+    if new in ls:
+        continue
+    if old in ls:
+        ls = ls.replace(old, new)
+        changed += 1
+    else:
+        print("Could not find launcher code to patch:", old.splitlines()[0].strip())
+if changed:
+    open(lp, "w", encoding="utf-8").write(ls)
+print(f"Launcher: {changed} Windows fix(es) applied" if changed else "Launcher already patched for Windows")
