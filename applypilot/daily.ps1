@@ -1,4 +1,4 @@
-# Daily ApplyPilot run: find, score, keep only wealth management roles, tailor, apply.
+# Daily ApplyPilot run: find, keep only undergrad finance internships, score, tailor, apply.
 # Run by hand:      powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\daily.ps1
 # Max applications per run is set by -Limit (default 10).
 param([int]$Limit = 10)
@@ -11,9 +11,9 @@ $log = "$HOME\.applypilot\logs\daily_$(Get-Date -Format yyyy-MM-dd_HHmm).txt"
 & {
     "=== $(Get-Date) ApplyPilot daily run ==="
     applypilot run discover
-    python "$HOME\job-agent\applypilot\keep_pwm_only.py"
+    python "$HOME\job-agent\applypilot\keep_finance_only.py"
     applypilot run enrich score
-    python "$HOME\job-agent\applypilot\keep_pwm_only.py"
+    python "$HOME\job-agent\applypilot\keep_finance_only.py"
     applypilot run tailor cover pdf --min-score 7
     applypilot apply --model sonnet --min-score 7 --limit $Limit
     applypilot status

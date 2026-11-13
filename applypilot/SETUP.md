@@ -1,119 +1,75 @@
 # ApplyPilot setup (Windows)
 
-ApplyPilot runs separately from job-agent, with its own Python environment. The files in this folder are made for it:
-- `resume.txt` is your resume in plain text. The setup wizard asks for it.
-- `searches.yaml` searches for summer 2027 wealth management internships anywhere in the US.
+ApplyPilot finds finance internships, tailors a resume and cover letter for each, and submits the applications. It runs separately from job-agent, in its own Python environment.
 
-## 1. Install Node.js
+The files in this folder are made for it:
+- `setup.ps1` installs and configures everything in one go
+- `fix_applypilot.py` patches ApplyPilot to work with current Claude models and on Windows
+- `profile.json` holds your details for application forms (no password; you add that on each PC)
+- `resume.txt` is your resume as plain text
+- `searches.yaml` searches for summer 2027 undergrad finance internships anywhere in the US, wealth management first
+- `env.txt` tells ApplyPilot to use Claude
+- `keep_finance_only.py` drops anything that isn't an undergrad finance internship (Sales, Tech, MBA roles, full-time jobs) before it costs anything
+- `daily.ps1` is the full daily run: search, filter, score, tailor, apply
+
+## 1. Run the setup script
+
+Needs Python 3.11+, Node.js 22+ and Git.
+```
+cd $HOME\job-agent
+git pull
+powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\setup.ps1
+```
+It ends with a list of what's still to do by hand. That list is steps 2 to 4 below.
+
+## 2. API key
+
+ApplyPilot uses your Claude API key (from console.anthropic.com > API Keys) for scoring, tailoring and cover letters. Type it into PowerShell, never into a chat:
+```
+setx LLM_API_KEY "your-key"
+```
+Close and reopen PowerShell afterwards.
+
+## 3. Job site password
 
 ```
-winget install OpenJS.NodeJS.LTS
+notepad $HOME\.applypilot\profile.json
 ```
-Close PowerShell, open a new one, and check it worked with `node -v`.
+Put a NEW password, used nowhere else, between the quotes in `"password": "",` and save. It's stored in plain text and used to create accounts on job sites.
 
-## 2. Install Claude Code (ApplyPilot uses it to fill out applications)
+## 4. Sign in to job sites once
 
+ApplyPilot uses its own Chrome profile and remembers sign-ins. Open it and sign in to Indeed:
 ```
-npm install -g @anthropic-ai/claude-code
-claude
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" --user-data-dir="$HOME\.applypilot\chrome-workers\worker-0" https://secure.indeed.com/auth
 ```
-Log in when it asks. If it offers to use your `ANTHROPIC_API_KEY`, say yes, and that pays from your API credit. Type `/exit` to leave.
+Close that Chrome window when done. Do the same for any site that later fails with LOGIN_ISSUE.
 
-## 3. Get a free Gemini API key
-
-ApplyPilot uses Gemini for scoring, resume tailoring and cover letters. Get a key at aistudio.google.com: Get API key > Create API key.
-
-## 4. Install ApplyPilot in its own environment
+## 5. Run it
 
 ```
-deactivate
-cd $HOME
-python -m venv applypilot-env
-applypilot-env\Scripts\activate
-pip install applypilot
-pip install --no-deps python-jobspy
-pip install pydantic tls-client requests markdownify regex
+powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\daily.ps1 -Limit 5
 ```
+`-Limit` is the most applications it submits in one run.
 
-## 5. Run the setup wizard
+## 6. Schedule it every morning
 
 ```
-applypilot init
+schtasks /create /tn "ApplyPilot" /tr "powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\daily.ps1" /sc daily /st 09:00
+```
+The PC must be on and you must be logged in at that time. Each run's log is in `$HOME\.applypilot\logs\daily_*.txt`.
+
+## Useful commands
+
+Run these after `cd $HOME` and `applypilot-env\Scripts\activate`:
+```
+applypilot status                                  # counts at each stage
+applypilot dashboard                               # results in the browser
+applypilot apply --dry-run --model sonnet          # fill one form without submitting
+applypilot apply --reset-failed                    # retry failed applications
+python $HOME\job-agent\applypilot\keep_finance_only.py   # list roles scoring 7+
 ```
 
-Answers to give:
+## Cost
 
-| Question | Answer |
-|---|---|
-| Resume file path | `C:\Users\axaxe\job-agent\applypilot\resume.txt` |
-| Full name | Daniel Holmberg |
-| Preferred name | Daniel |
-| Email | holmbed@wwu.edu |
-| Phone | 425-898-3324 |
-| City / State / Country / ZIP | Kirkland / Washington / United States / 98033 |
-| Street address | 1730 1st Street |
-| LinkedIn | https://www.linkedin.com/in/mrholmberg |
-| GitHub, portfolio, website | leave blank |
-| Job site password | A NEW password used nowhere else. It gets stored in plain text and used to create accounts on job sites. |
-| Authorized to work | y |
-| Need sponsorship | n |
-| Work permit type | Citizen |
-| Expected annual salary | your call (e.g. 40000, roughly $20/hour full time) |
-| Currency | USD |
-| Acceptable range | e.g. 35000-60000 |
-| Current title | Go-to-Market Strategy Intern |
-| Target role | Private Wealth Management Intern |
-| Years of experience | 0 |
-| Highest education | Bachelor's (in progress, expected June 2028) |
-| Programming languages / frameworks | leave blank |
-| Tools | Excel, PowerPoint, AI tools |
-| Companies to keep | Tupl Inc., DERU Market, Virke |
-| Projects to keep | Monte Carlo Simulation on NASDAQ Stock Performance, Five-Year P&L Forecasting Model, Goldman Sachs Operations Job Simulation |
-| School | Western Washington University |
-| Metrics to keep | 41 senior decision-makers, 10 target accounts, 190-site T-Mobile deployment, 5 international markets, 2,000+ data points, 9 business units, 3,000 students, $20 pay-per-lead |
-| Earliest start date | June 2027 |
-| Target location / radius / titles | anything, these get replaced in step 6 |
-| AI provider | gemini, then paste your Gemini key, then press Enter for the default model |
-| Enable auto-apply | y |
-| CapSolver | n |
-
-## 6. Swap in the internship search config
-
-The wizard writes a basic search file. Replace it with this one:
-```
-copy $HOME\job-agent\applypilot\searches.yaml $HOME\.applypilot\searches.yaml
-```
-
-## 7. Check the setup
-
-```
-applypilot doctor
-```
-
-## 8. Find, score and tailor
-
-```
-applypilot run
-```
-Results: `applypilot status` and `applypilot dashboard`. Tailored files are in `C:\Users\axaxe\.applypilot\`.
-
-## 9. Practice applying (fills forms, does NOT submit)
-
-```
-applypilot apply --dry-run --model sonnet
-```
-
-## 10. Apply for real
-
-```
-applypilot apply --model sonnet
-```
-
-`--model sonnet` is better than the default (haiku) at multi-page Workday forms.
-
-## Every time you open PowerShell
-
-```
-cd $HOME
-applypilot-env\Scripts\activate
-```
+Scoring is a few cents per job and tailoring is 10 to 20 cents per job, both from your API credit. Each submitted application costs about $0.20. The first run costs the most, because it processes every posting from the last 60 days.

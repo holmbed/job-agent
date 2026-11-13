@@ -1,26 +1,38 @@
-# ApplyPilot search config for summer 2027 wealth management internships, anywhere in the US.
+# ApplyPilot search config for summer 2027 undergrad finance internships, anywhere in the US (wealth management first).
 # Copy to %USERPROFILE%\.applypilot\searches.yaml AFTER running applypilot init (init overwrites it).
 
 queries:
   - query: "private wealth management intern"
     tier: 1
-  - query: "wealth management intern"
-    tier: 1
   - query: "wealth management summer internship 2027"
+    tier: 1
+  - query: "financial planning intern"
     tier: 1
   - query: "wealth management summer analyst"
     tier: 1
-  - query: "financial planning intern"
+  - query: "finance intern summer 2027"
     tier: 2
-  - query: "private client intern"
+  - query: "financial analyst intern"
     tier: 2
-  - query: "financial advisor intern"
+  - query: "corporate finance intern"
     tier: 2
-  - query: "wealth advisory intern"
+  - query: "investment banking summer analyst 2027"
     tier: 2
   - query: "investment management intern"
+    tier: 2
+  - query: "equity research intern"
+    tier: 2
+  - query: "sales and trading summer analyst"
+    tier: 2
+  - query: "FP&A intern"
     tier: 3
-  - query: "private banking summer analyst"
+  - query: "treasury intern"
+    tier: 3
+  - query: "risk management intern finance"
+    tier: 3
+  - query: "credit analyst intern"
+    tier: 3
+  - query: "private equity intern"
     tier: 3
 
 locations:
