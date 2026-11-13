@@ -27,7 +27,9 @@ DROP = re.compile(
     r"retail sales|teller|insurance agent|loan officer|mortgage loan|"
     r"\bmba\b|graduate program|ph\.?d|master'?s|associate program|"
     r"full[- ]time|senior|\bsr\.?\b|manager|director|vice president|\bvp\b|"
-    r"\b20(2[0-6])\b(?!.*2027)|spring 20|fall 20|winter 20|co-?op", re.I)
+    r"\b20(2[0-6]|2[89]|3\d)\b(?!.*2027)|\bspring\b|\bfall\b|\bwinter\b|year[- ]round|co-?op|"
+    r"unpaid|for[- ]credit|social media|brand|credit repair|legal|crop|catastrophe|"
+    r"\bit risk\b|cyber|grc|compliance analyst", re.I)
 
 INTERN = re.compile(r"intern|summer analyst|summer 20\d\d analyst|summer associate|summer program", re.I)
 

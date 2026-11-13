@@ -21,6 +21,14 @@ if (-not (Test-Path "$HOME\applypilot-env\Scripts\applypilot.exe")) {
     Write-Host "ApplyPilot isn't installed yet. Run setup.ps1 first (see SETUP.md)."; exit 1
 }
 & "$HOME\applypilot-env\Scripts\Activate.ps1"
+
+# Stop now if the Claude API key is missing or rejected, instead of failing every job.
+$keyCheck = python -c "import os,httpx;k=os.environ.get('LLM_API_KEY','');print('missing' if not k else httpx.post('https://api.anthropic.com/v1/chat/completions',headers={'Authorization':'Bearer '+k},json={'model':'claude-haiku-5-5','messages':[{'role':'user','content':'hi'}],'max_tokens':5},timeout=60).status_code)"
+if ($keyCheck -ne "200") {
+    Write-Host "Claude API key problem ($keyCheck). LLM_API_KEY is missing or rejected in this window."
+    Write-Host "Fix: create a key at console.anthropic.com > API Keys, run  setx LLM_API_KEY `"your-key`"  then open a NEW PowerShell window."
+    exit 1
+}
 New-Item -ItemType Directory -Force -Path "$HOME\.applypilot\logs" | Out-Null
 $log = "$HOME\.applypilot\logs\daily_$(Get-Date -Format yyyy-MM-dd_HHmm).txt"
 $filter = "$HOME\job-agent\applypilot\keep_finance_only.py"

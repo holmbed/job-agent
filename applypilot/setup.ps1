@@ -53,6 +53,7 @@ if (-not $healthy) {
 & $vpy -m pip install --quiet --no-deps python-jobspy; Check "Installing python-jobspy"
 & $vpy -m pip install --quiet pydantic tls-client requests markdownify regex curl_cffi; Check "Installing extras"
 & $vpy -c "import jobspy, applypilot; print('ApplyPilot installed')"; Check "ApplyPilot import"
+& $vpy -m playwright install chromium; Check "Installing the page-reading browser"
 
 Write-Host "`n[3/5] Patching ApplyPilot for Claude and Windows..."
 & $vpy "$src\fix_applypilot.py"; Check "Patching"
