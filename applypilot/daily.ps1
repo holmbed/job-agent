@@ -10,6 +10,9 @@ param([int]$Limit = 10, [int]$MinScore = 8)
 
 $env:PATH += ";C:\Program Files\nodejs;$env:APPDATA\npm;C:\Program Files\Git\cmd"
 Set-Location $HOME
+if (-not (Test-Path "$HOME\applypilot-env\Scripts\applypilot.exe")) {
+    Write-Host "ApplyPilot isn't installed yet. Run setup.ps1 first (see SETUP.md)."; exit 1
+}
 & "$HOME\applypilot-env\Scripts\Activate.ps1"
 New-Item -ItemType Directory -Force -Path "$HOME\.applypilot\logs" | Out-Null
 $log = "$HOME\.applypilot\logs\daily_$(Get-Date -Format yyyy-MM-dd_HHmm).txt"
