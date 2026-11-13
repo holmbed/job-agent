@@ -17,9 +17,10 @@ function Find-Python {
     foreach ($p in $candidates | Select-Object -Unique) {
         if ($p -like "*WindowsApps*") { continue }   # Microsoft Store shortcut, not a real Python
         try {
+            $ErrorActionPreference = "Continue"
             $v = & $p -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>$null
             if ($LASTEXITCODE -eq 0 -and $v -match '^3\.(1[1-3])$') { return $p }
-        } catch {}
+        } catch {} finally { $ErrorActionPreference = "Stop" }
     }
     return $null
 }
@@ -37,8 +38,11 @@ Write-Host "`n[2/5] Creating the ApplyPilot environment (takes a few minutes the
 $vpy = "$venv\Scripts\python.exe"
 $healthy = $false
 if (Test-Path $vpy) {
-    & $vpy -m pip --version *> $null
-    $healthy = ($LASTEXITCODE -eq 0)
+    try {
+        $ErrorActionPreference = "Continue"
+        & $vpy -m pip --version *> $null
+        $healthy = ($LASTEXITCODE -eq 0)
+    } catch { $healthy = $false } finally { $ErrorActionPreference = "Stop" }
 }
 if (-not $healthy) {
     if (Test-Path $venv) { Write-Host "Existing environment is broken, rebuilding it."; Remove-Item -Recurse -Force $venv }
