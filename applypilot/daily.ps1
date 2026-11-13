@@ -1,20 +1,31 @@
 # Daily ApplyPilot run: find, keep only undergrad finance internships, score, tailor, apply.
-# Run by hand:      powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\daily.ps1
-# Max applications per run is set by -Limit (default 10).
-param([int]$Limit = 10)
+#   powershell -ExecutionPolicy Bypass -File $HOME\job-agent\applypilot\daily.ps1 -Limit 1000
+#
+# Cost controls:
+#   -Limit      most applications submitted this run (default 10)
+#   -MinScore   only tailor and apply to jobs scoring at least this (default 8; 7 = more jobs, more cost)
+#   Scoring uses Claude Haiku (cheap, runs on every job). Tailoring and cover letters use Sonnet
+#   (better writing, only runs on jobs that pass -MinScore).
+param([int]$Limit = 10, [int]$MinScore = 8)
 
 $env:PATH += ";C:\Program Files\nodejs;$env:APPDATA\npm;C:\Program Files\Git\cmd"
 Set-Location $HOME
 & "$HOME\applypilot-env\Scripts\Activate.ps1"
+New-Item -ItemType Directory -Force -Path "$HOME\.applypilot\logs" | Out-Null
 $log = "$HOME\.applypilot\logs\daily_$(Get-Date -Format yyyy-MM-dd_HHmm).txt"
+$filter = "$HOME\job-agent\applypilot\keep_finance_only.py"
 
 & {
-    "=== $(Get-Date) ApplyPilot daily run ==="
+    "=== $(Get-Date) ApplyPilot daily run (limit $Limit, min score $MinScore) ==="
     applypilot run discover
-    python "$HOME\job-agent\applypilot\keep_finance_only.py"
+    python $filter
+
+    $env:LLM_MODEL = "claude-haiku-5-5"
     applypilot run enrich score
-    python "$HOME\job-agent\applypilot\keep_finance_only.py"
-    applypilot run tailor cover pdf --min-score 7
-    applypilot apply --model sonnet --min-score 7 --limit $Limit
+    python $filter
+
+    $env:LLM_MODEL = "claude-sonnet-5-5"
+    applypilot run tailor cover pdf --min-score $MinScore
+    applypilot apply --model sonnet --min-score $MinScore --limit $Limit
     applypilot status
 } *>&1 | Tee-Object -FilePath $log

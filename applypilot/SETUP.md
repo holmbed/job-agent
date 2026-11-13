@@ -24,7 +24,7 @@ It ends with a list of what's still to do by hand. That list is steps 2 to 4 bel
 
 ## 2. API key
 
-ApplyPilot uses your Claude API key (from console.anthropic.com > API Keys) for scoring, tailoring and cover letters. Type it into PowerShell, never into a chat:
+ApplyPilot uses your Claude API key (from console.anthropic.com > API Keys) for scoring (Haiku, cheap) and tailoring and cover letters (Sonnet). Type it into PowerShell, never into a chat:
 ```
 setx LLM_API_KEY "your-key"
 ```
@@ -72,4 +72,11 @@ python $HOME\job-agent\applypilot\keep_finance_only.py   # list roles scoring 7+
 
 ## Cost
 
-Scoring is a few cents per job and tailoring is 10 to 20 cents per job, both from your API credit. Each submitted application costs about $0.20. The first run costs the most, because it processes every posting from the last 60 days.
+Ways to keep it down:
+- **Spending limit:** set a monthly limit at console.anthropic.com > Settings > Limits. ApplyPilot stops when it's hit. This is the only hard cap.
+- **`-MinScore`:** the daily script only tailors and applies to jobs scoring 8+ by default. `-MinScore 9` is cheaper; `-MinScore 7` applies more widely and costs more.
+- **Scoring runs on Haiku,** which is cheap. Only jobs that pass the score get Sonnet for tailoring.
+- **Applying runs through Claude Code.** If Claude Code is logged in with a Pro or Max plan and `ANTHROPIC_API_KEY` is not set on the PC, submitting is covered by the plan instead of API credit (plan usage limits apply).
+- **Later runs are cheaper:** only new postings get scored and tailored.
+
+Rough API cost per run: about 1 cent per job scored, 10 to 20 cents per job tailored.
